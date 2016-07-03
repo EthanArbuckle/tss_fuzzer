@@ -15,6 +15,7 @@
     if ((self = [super init])) {
         
         _internalFuzzingState = TSSFuzzerStateIdle;
+        _autosaveDuration = 5;
     }
     
     return self;
@@ -155,14 +156,10 @@
         return;
     }
     
+    
     _baseXMLData = baseXMLString;
     _currentFuzzData = _baseXMLData;
-    _baseXMLHash = [self sha1FromString:baseXMLString];
-    
-    if (_evolvingFuzz) {
-        
-        _previousFuzzedXMLData = _baseXMLData;
-    }
+    _baseXMLHash = [self sha1FromString:_baseXMLData];
     
     _currentCycleCount += 1;
     
@@ -172,7 +169,7 @@
 
 - (void)performTSSRequestWithXMLPostData:(NSString *)xmlPostData {
     
-    [NSThread sleepForTimeInterval:_rateLimit];
+    [NSThread sleepForTimeInterval:(_rateLimit <= 0) ? 0.5f : _rateLimit];
     
     _previousFuzzedXMLData = xmlPostData;
     
@@ -209,7 +206,7 @@
 
 - (void)TSSRequestCompletedWithResponse:(NSString *)tssResponse {
     
-    if ((_currentCycleCount % 5) == 0) {
+    if ((_currentCycleCount % _autosaveDuration) == 0) {
         
         [self saveFuzzResultsToFile];
     }

@@ -33,7 +33,7 @@ typedef enum {
 
 } TSSFuzzerState;
 
-#define kPythonFuzzerPath @"/Users/user/Desktop/fuzzers/generic_xml_fuzzer.py"
+#define kPythonFuzzerPath @"/Users/ethanarbuckle/Desktop/fuzzers/generic_xml_fuzzer.py"
 
 #define kTSSServerAddress @"https://gs.apple.com/TSS/controller?action=2"
 #define kTSSStatus @"STATUS"
@@ -51,6 +51,7 @@ typedef enum {
 @property (nonatomic) NSUInteger currentCycleCount;
 @property (nonatomic) NSUInteger maximumErrorCount;
 @property (nonatomic) NSUInteger currentErrorCount;
+@property (nonatomic) NSUInteger autosaveDuration;
 
 @property (nonatomic) CGFloat rateLimit;
 

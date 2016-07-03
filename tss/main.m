@@ -24,7 +24,7 @@ int main(int argc, const char * argv[]) {
         
         dispatch_async(dispatch_queue_create("com.fuzzer.fuzzthread", NULL), ^{
             
-            [fuzzer beginFuzzingWithBaseXMLAtPath:@"/Users/ethanarbuckle/Desktop/baseband.xml" continuously:YES cycleCount:0 maximumErrorCount:10 evolvingFuzz:YES rateLimitDuration:1.0f clearExistingFuzzCache:YES printResultsOnCompletion:YES ignoreFuzzerFormatErrors:NO];
+            [fuzzer beginFuzzingWithBaseXMLAtPath:@"/Users/ethanarbuckle/Desktop/baseband.xml" continuously:YES cycleCount:0 maximumErrorCount:3 evolvingFuzz:YES rateLimitDuration:1.0f clearExistingFuzzCache:YES printResultsOnCompletion:YES ignoreFuzzerFormatErrors:NO];
         });
         
         CFRunLoopRun();
