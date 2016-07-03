@@ -346,11 +346,7 @@
 
 - (BOOL)saveFuzzResultsToFile {
     
-    NSMutableArray *existingResults = [[NSArray arrayWithContentsOfFile:[self savedResultsFilePathLocation]] mutableCopy];
-    if (!existingResults) {
-        
-        existingResults = [[NSMutableArray alloc] init];
-    }
+    NSMutableArray *fuzzedDataArray = (_clearCache) ? [[NSMutableArray alloc] init] : [[NSArray arrayWithContentsOfFile:[self savedResultsFilePathLocation]] mutableCopy];
 
     if ([[NSFileManager defaultManager] fileExistsAtPath:[self savedResultsFilePathLocation]]) {
         
@@ -373,12 +369,12 @@
     
     for (NSDictionary *fuzzItem in _fuzzResults) {
         
-        [existingResults addObject:fuzzItem];
+        [fuzzedDataArray addObject:fuzzItem];
     }
     
-    if ([existingResults count] > 0) {
+    if ([fuzzedDataArray count] > 0) {
         
-        if (![existingResults writeToFile:[self savedResultsFilePathLocation] atomically:YES]) {
+        if (![fuzzedDataArray writeToFile:[self savedResultsFilePathLocation] atomically:YES]) {
             
             NSLog(@"\n");
             NSLog(@"[!] error writing results to file! dumping to console...\n\n");
