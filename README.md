@@ -23,6 +23,7 @@ Basic usage as follows:
 
 
 Here's a rundown of some of the configuration options
+
 | Property        | USage         |
 | ------------- |:-------------:|
 | `cycleCount`     | The amount of requests the fuzzer will make. Ignored when `cycleContinuously` is `YES`. |
