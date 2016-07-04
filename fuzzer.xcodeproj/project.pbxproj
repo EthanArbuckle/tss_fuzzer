@@ -26,6 +26,7 @@
 /* Begin PBXFileReference section */
 		5F4AB7F61D28F2A70067A396 /* TSSFuzzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TSSFuzzer.h; sourceTree = "<group>"; };
 		5F4AB7F71D28F2A70067A396 /* TSSFuzzer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSSFuzzer.m; sourceTree = "<group>"; };
+		5F4AB7FC1D29B57A0067A396 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		5FF581871CA1C8D300140994 /* fuzzer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fuzzer; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FF5818A1CA1C8D300140994 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -44,6 +45,7 @@
 		5FF5817E1CA1C8D300140994 = {
 			isa = PBXGroup;
 			children = (
+				5F4AB7FC1D29B57A0067A396 /* libxml2.tbd */,
 				5FF581891CA1C8D300140994 /* tss */,
 				5FF581881CA1C8D300140994 /* Products */,
 			);
@@ -213,6 +215,7 @@
 		5FF5818F1CA1C8D300140994 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = "";
 				PRODUCT_NAME = fuzzer;
 			};
 			name = Debug;
@@ -220,6 +223,7 @@
 		5FF581901CA1C8D300140994 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = "";
 				PRODUCT_NAME = fuzzer;
 			};
 			name = Release;

@@ -295,7 +295,7 @@
 }
 
 - (TSSResponseStatus)statusFromResponse:(NSString *)tssResponse error:(NSError **)requestError {
-    
+        
     NSMutableDictionary *statuses = [[NSMutableDictionary alloc] init];
     for (NSString *individualMessage in [tssResponse componentsSeparatedByString:@"&"]) {
         
@@ -335,7 +335,7 @@
         
         if ([[statuses valueForKey:kTSSStatus] integerValue] != TSSResponseSuccess) {
             
-            *requestError = [NSError errorWithDomain:[NSString stringWithFormat:@"raised internal error %ld, %@", [[statuses valueForKey:kTSSStatus] integerValue], ([statuses valueForKey:kTSSMessage]) ? [statuses valueForKey:kTSSMessage] : @"!"] code:[[statuses valueForKey:kTSSStatus] integerValue] userInfo:nil];
+            *requestError = [NSError errorWithDomain:[NSString stringWithFormat:@"raised internal error %ld, %@", [[statuses valueForKey:kTSSStatus] integerValue], [statuses valueForKey:kTSSMessage]] code:[[statuses valueForKey:kTSSStatus] integerValue] userInfo:nil];
             
             return TSSResponseFailed;
         }
@@ -414,14 +414,24 @@
         }
     }
     
-    
-    NSMutableString *formattedErrorList = [@"[" mutableCopy];
-    for (NSString *errorCode in _errorsRaised) {
+    NSString *errorsString;
+    if ([_errorsRaised count] > 0) {
         
-        [formattedErrorList appendFormat:@"%@%@", errorCode, ([_errorsRaised indexOfObject:errorCode] < ([_errorsRaised count] - 1)) ? @", " : @"]"];
+        NSMutableString *formattedErrorList = [@"[" mutableCopy];
+        for (NSString *errorCode in _errorsRaised) {
+            
+            [formattedErrorList appendFormat:@"%@%@", errorCode, ([_errorsRaised indexOfObject:errorCode] < ([_errorsRaised count] - 1)) ? @", " : @"]"];
+        }
+        
+        errorsString = formattedErrorList;
     }
     
-    NSLog(@"\n\nfuzzing completed.\ntotal requests: %ld\nsuccessful requests: %ld\nfailed requests: %ld\nerrors raised: %@\n\n", [_fuzzResults count], [resultsDictionary[@"successes"] integerValue], [resultsDictionary[@"failures"] integerValue], formattedErrorList);
+    else {
+        
+        errorsString = @"[]";
+    }
+    
+    NSLog(@"\n\nfuzzing completed.\ntotal requests: %ld\nsuccessful requests: %ld\nfailed requests: %ld\nerrors raised: %@\n\n", [_fuzzResults count], [resultsDictionary[@"successes"] integerValue], [resultsDictionary[@"failures"] integerValue], errorsString);
     
     NSLog(@"\n");
     
@@ -501,7 +511,7 @@
                 }
                 
                 NSString *fuzzResultPostedString = [[NSString alloc] initWithData:fuzzInfo[@"xmlPostData"] encoding:NSUTF8StringEncoding];
-                NSLog(@"\n\n[%ld.] %@%@ \n\t\tresponse length: %@\n\t\tresponse hash: %@\n\t\tstatus code: %@\n\t\tmessage: \"%@\"\n\t\txml data %@ : %@\n\t\txml data hash : %@\n\n", fuzzResultIndex, ([fuzzInfo[@"didSucceed"] boolValue]) ? @"SUCCESS" : @"FAILED", ([_baseXMLHash isEqualToString:fuzzInfo[@"xmlHash"]]) ? @" (requests xml data matches original base data):" : @":", [fuzzInfo[@"responseLength"] stringValue], fuzzInfo[@"responseHash"], fuzzInfo[@"responseMessages"][kTSSStatus], fuzzInfo[@"responseMessages"][kTSSMessage], (_expandXMLWhenDumping) ? @"string" : @"length", (_expandXMLWhenDumping) ? fuzzResultPostedString : [NSString stringWithFormat:@"%ld", [fuzzResultPostedString length]], fuzzInfo[@"xmlHash"]);
+                NSLog(@"\n\n[%ld.] %@%@ \n\n\t\tresponse length: %@\n\t\tresponse hash: %@\n\t\tstatus code: %@\n\t\tmessage: \"%@\"\n\t\txml data %@ : %@\n\t\txml data hash : %@\n\n", fuzzResultIndex, ([fuzzInfo[@"didSucceed"] boolValue]) ? @"SUCCESS" : @"FAILED", ([_baseXMLHash isEqualToString:fuzzInfo[@"xmlHash"]]) ? @" (requests xml data matches original base data):" : @":", [fuzzInfo[@"responseLength"] stringValue], fuzzInfo[@"responseHash"], fuzzInfo[@"responseMessages"][kTSSStatus], fuzzInfo[@"responseMessages"][kTSSMessage], (_expandXMLWhenDumping) ? @"string" : @"length", (_expandXMLWhenDumping) ? fuzzResultPostedString : [NSString stringWithFormat:@"%ld", [fuzzResultPostedString length]], fuzzInfo[@"xmlHash"]);
             }
         }
     }
