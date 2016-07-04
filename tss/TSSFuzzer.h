@@ -47,11 +47,14 @@ typedef enum {
 @property (nonatomic, retain) NSMutableArray *fuzzResults;
 @property (nonatomic, retain) NSMutableArray *errorsRaised;
 
+@property (nonatomic, retain) NSMutableDictionary *statusCodeOccurance;
+
 @property (nonatomic) NSUInteger cycleCount;
 @property (nonatomic) NSUInteger currentCycleCount;
 @property (nonatomic) NSUInteger maximumErrorCount;
 @property (nonatomic) NSUInteger currentErrorCount;
 @property (nonatomic) NSUInteger autosaveDuration;
+@property (nonatomic) NSUInteger maximumStatusRepeats;
 
 @property (nonatomic) CGFloat rateLimit;
 
@@ -68,6 +71,7 @@ typedef enum {
 @property (nonatomic) BOOL expandXMLWhenDumping;
 @property (nonatomic) BOOL suppressFuzzerErrorOutput;
 @property (nonatomic) BOOL supressLoggingOfFailedAttempts;
+@property (nonatomic) BOOL onlySaveSuccessfulRequests;
 
 @property (nonatomic) XMLParserErrorOutputState internalParserOutputState;
 @property (nonatomic) TSSFuzzerState internalFuzzingState;

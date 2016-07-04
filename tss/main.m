@@ -14,7 +14,7 @@ int main(int argc, const char * argv[]) {
     @autoreleasepool {
 
         __block TSSFuzzer *fuzzer = [[TSSFuzzer alloc] init];
-        
+        [fuzzer setSupressLoggingOfFailedAttempts:YES];
         [fuzzer setFuzzerCompletionHandler:^{
             
             NSLog(@"\n");
@@ -24,7 +24,7 @@ int main(int argc, const char * argv[]) {
         
         dispatch_async(dispatch_queue_create("com.fuzzer.fuzzthread", NULL), ^{
             
-            [fuzzer beginFuzzingWithBaseXMLAtPath:@"/Users/ethanarbuckle/Desktop/baseband.xml" continuously:NO cycleCount:1 maximumErrorCount:1 evolvingFuzz:YES rateLimitDuration:1.0f clearExistingFuzzCache:YES printResultsOnCompletion:YES ignoreFuzzerFormatErrors:NO];
+            [fuzzer beginFuzzingWithBaseXMLAtPath:@"/Users/ethanarbuckle/Desktop/baseband.xml" continuously:NO cycleCount:5 maximumErrorCount:5 evolvingFuzz:YES rateLimitDuration:1.0f clearExistingFuzzCache:YES printResultsOnCompletion:YES ignoreFuzzerFormatErrors:NO];
         });
         
         CFRunLoopRun();

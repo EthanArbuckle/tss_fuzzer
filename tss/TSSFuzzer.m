@@ -16,6 +16,8 @@
         
         _internalFuzzingState = TSSFuzzerStateIdle;
         _autosaveDuration = 5;
+        _maximumStatusRepeats = 3;
+        
     }
     
     return self;
@@ -134,6 +136,8 @@
     
     _internalParserOutputState = (_suppressFuzzerErrorOutput) ? XMLParserErrorOutputReduced : XMLParserErrorOutputFull;
     
+    _statusCodeOccurance = [[NSMutableDictionary alloc] init];
+
     uint total = 0;
     Ivar *ivarsBuffer = class_copyIvarList([self class], &total);
     NSMutableString *fuzzCycleSettings = [[NSMutableString alloc] initWithString:@"starting fuzzer with settings:\n"];
@@ -241,11 +245,43 @@
         
         if ([_previousFuzzedXMLData isEqualToString:_baseXMLData]) {
             
-            NSLog(@"\t[!] above request used orignal xml base data (%@).", _baseXMLHash);
+            NSLog(@"\t[!] above request used original xml base data (%@).", _baseXMLHash);
             NSLog(@"\n");
         }
     }
+    
+    if ([[_statusCodeOccurance allKeys] count] > 0) {
         
+        NSString *lastCodeThrown = [[_statusCodeOccurance allKeys] lastObject];
+        if ([lastCodeThrown isEqualToString:[_fuzzResults lastObject][@"responseMessages"][kTSSStatus]]) {
+            
+            if ([_statusCodeOccurance valueForKey:lastCodeThrown] && [[_statusCodeOccurance valueForKey:lastCodeThrown] integerValue] >= _maximumStatusRepeats) {
+                
+                NSLog(@"\t[*] we're stuck on this error code, resetting.");
+                NSLog(@"\n");
+                
+                [_statusCodeOccurance removeAllObjects];
+                _previousFuzzedXMLData = _baseXMLData;
+            }
+            
+            else {
+                
+                [_statusCodeOccurance setValue:@([[_statusCodeOccurance valueForKey:lastCodeThrown] integerValue] + 1) forKey:lastCodeThrown];
+            }
+        }
+        
+        else {
+            
+            [_statusCodeOccurance removeAllObjects];
+            [_statusCodeOccurance setValue:@(1) forKey:[_fuzzResults lastObject][@"responseMessages"][kTSSStatus]];
+        }
+    }
+    
+    else {
+        
+        [_statusCodeOccurance setValue:@(1) forKey:[_fuzzResults lastObject][@"responseMessages"][kTSSStatus]];
+    }
+    
     if (_currentCycleCount++ < _cycleCount || _cycleContinuously) {
         
         if (_currentErrorCount >= _maximumErrorCount) {
@@ -327,7 +363,7 @@
         [hashResponses addObject:[self sha1FromString:stringToHash]];
     }
     
-    NSDictionary *fuzzCycleResults = @{ @"didSucceed" : ([[statuses valueForKey:kTSSStatus] integerValue] == TSSResponseSuccess) ? @(1) : @(0), @"responseMessages" : [statuses copy], @"xmlPostData" : [(_evolvingFuzz) ? _previousFuzzedXMLData : _baseXMLData dataUsingEncoding:NSUTF8StringEncoding], @"responseLength" : @([tssResponse length]), @"responseHash" : hashResponses[0], @"xmlHash" : hashResponses[1] };
+    NSDictionary *fuzzCycleResults = @{ @"didSucceed" : ([[statuses valueForKey:kTSSStatus] integerValue] == TSSResponseSuccess) ? @(1) : @(0), @"responseMessages" : [statuses copy], @"xmlPostData" : [_previousFuzzedXMLData dataUsingEncoding:NSUTF8StringEncoding], @"responseLength" : @([tssResponse length]), @"responseHash" : hashResponses[0], @"xmlHash" : hashResponses[1] };
     
     [_fuzzResults addObject:fuzzCycleResults];
     
@@ -336,7 +372,7 @@
         if ([[statuses valueForKey:kTSSStatus] integerValue] != TSSResponseSuccess) {
             
             *requestError = [NSError errorWithDomain:[NSString stringWithFormat:@"raised internal error %ld, %@", [[statuses valueForKey:kTSSStatus] integerValue], [statuses valueForKey:kTSSMessage]] code:[[statuses valueForKey:kTSSStatus] integerValue] userInfo:nil];
-            
+                
             return TSSResponseFailed;
         }
     }
@@ -346,7 +382,7 @@
 
 - (BOOL)saveFuzzResultsToFile {
     
-    NSMutableArray *fuzzedDataArray = (_clearCache) ? [[NSMutableArray alloc] init] : [[NSArray arrayWithContentsOfFile:[self savedResultsFilePathLocation]] mutableCopy];
+    NSMutableArray *fuzzedDataArray = (/*_clearCache*/ 1) ? [[NSMutableArray alloc] init] : [[NSArray arrayWithContentsOfFile:[self savedResultsFilePathLocation]] mutableCopy];
 
     if ([[NSFileManager defaultManager] fileExistsAtPath:[self savedResultsFilePathLocation]]) {
         
@@ -368,6 +404,11 @@
     }
     
     for (NSDictionary *fuzzItem in _fuzzResults) {
+        
+        if (_onlySaveSuccessfulRequests && ![fuzzItem[@"didSucceed"] boolValue]) {
+            
+            continue;
+        }
         
         [fuzzedDataArray addObject:fuzzItem];
     }
@@ -498,6 +539,10 @@
     if ([existingResults count] > 0) {
         
         NSLog(@"[self->expandXMLWhenDumping=%d] %@.", _expandXMLWhenDumping, (_expandXMLWhenDumping) ? @"expanding xml, will show full request content" : @"not expanding xml, only showing xml request content length");
+        if (_supressLoggingOfFailedAttempts) {
+
+            NSLog(@"[*] _supressLoggingOfFailedAttempts is enabled, only successful attempts will be shown.");
+        }
         
         NSUInteger fuzzResultIndex = 0;
         while (fuzzResultIndex < [existingResults count]) {
@@ -511,7 +556,7 @@
                 }
                 
                 NSString *fuzzResultPostedString = [[NSString alloc] initWithData:fuzzInfo[@"xmlPostData"] encoding:NSUTF8StringEncoding];
-                NSLog(@"\n\n[%ld.] %@%@ \n\n\t\tresponse length: %@\n\t\tresponse hash: %@\n\t\tstatus code: %@\n\t\tmessage: \"%@\"\n\t\txml data %@ : %@\n\t\txml data hash : %@\n\n", fuzzResultIndex, ([fuzzInfo[@"didSucceed"] boolValue]) ? @"SUCCESS" : @"FAILED", ([_baseXMLHash isEqualToString:fuzzInfo[@"xmlHash"]]) ? @" (requests xml data matches original base data):" : @":", [fuzzInfo[@"responseLength"] stringValue], fuzzInfo[@"responseHash"], fuzzInfo[@"responseMessages"][kTSSStatus], fuzzInfo[@"responseMessages"][kTSSMessage], (_expandXMLWhenDumping) ? @"string" : @"length", (_expandXMLWhenDumping) ? fuzzResultPostedString : [NSString stringWithFormat:@"%ld", [fuzzResultPostedString length]], fuzzInfo[@"xmlHash"]);
+                NSLog(@"\n\n[%ld.] %@%@ \n\n\t\tresponse length: %@\n\t\tresponse hash: %@\n\t\tstatus code: %@\n\t\tmessage: \"%@\"\n\t\txml data %@ : %@\n\t\txml data hash : %@\n\n", fuzzResultIndex, ([fuzzInfo[@"didSucceed"] boolValue]) ? @"SUCCESS" : @"FAILED", ([_baseXMLHash isEqualToString:fuzzInfo[@"xmlHash"]]) ? @" (original):" : @":", [fuzzInfo[@"responseLength"] stringValue], fuzzInfo[@"responseHash"], fuzzInfo[@"responseMessages"][kTSSStatus], fuzzInfo[@"responseMessages"][kTSSMessage], (_expandXMLWhenDumping) ? @"string" : @"length", (_expandXMLWhenDumping) ? fuzzResultPostedString : [NSString stringWithFormat:@"%ld", [fuzzResultPostedString length]], fuzzInfo[@"xmlHash"]);
             }
         }
     }
